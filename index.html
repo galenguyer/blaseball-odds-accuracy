@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            html,body {
+                font-family: Arial, Helvetica, sans-serif;
+                text-align: center;
+                height: 90%;
+            }
+            #root {
+                position: relative;
+                top: 50%;
+                transform: translateY(-50%); /* or try 50% */
+            }
+        </style>
+    </head>
+    <body>
+        <div id='root'>
+            <h1>Loading...</h1>
+        </div>
+        <script>
+            let totalGames = 0;
+            let accurateGames = 0;
+            fetch("https://api.sibr.dev/chronicler/v1/games?season=12")
+            .then(res => res.json())
+            .then(data => data.data.filter(game => game.endTime != null))
+            .then(data => {
+                totalGames = data.length;
+                data.forEach(game => {
+                    let g = game.data;
+                    if ((g.homeOdds > g.awayOdds) == (g.homeScore > g.awayScore)) {
+                        accurateGames += 1;
+                    }
+                });
+            })
+            .then(() => {
+                let root = document.getElementById('root');
+                root.innerHTML = "";
+                let rate = document.createElement('h1');
+                rate.innerText = `Accuracy Rate: ${((accurateGames*100)/totalGames).toFixed(1)}%`;
+                root.append(rate);
+                let description = document.createElement('p');
+                description = `Out of ${totalGames} games, ${accurateGames} were correctly predicted.`;
+                root.append(description);
+            });
+        </script>
+    </body>
+</html>
