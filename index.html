@@ -17,6 +17,9 @@
                 top: 50%;
                 transform: translateY(-50%); /* or try 50% */
             }
+            #note > p {
+                margin: 4px;
+            }
         </style>
     </head>
     <body>
@@ -24,38 +27,80 @@
             <h1>Loading...</h1>
         </div>
         <script>
-            function getDataForSeason(season) {
-                let totalGames = 0;
+            let bracketDist = 5;
+            var season;
+            var data;
+
+            function round(number, nearest) {
+                return Math.floor(number / nearest) * nearest;
+            }
+
+            function render() {
+                let brackets = {};
+                let totalGames = data.length;
                 let accurateGames = 0;
+
+                for (var i = 50; i < 100; i++) {
+                    brackets[round(i, bracketDist)] = {total: 0, accurate: 0}
+                }
+
+                data.forEach(game => {
+                    let g = game.data;
+                    let bracket = round(Math.max(g.homeOdds*100, g.awayOdds*100), bracketDist);
+                    brackets[bracket].total += 1;
+                    if ((g.homeOdds > g.awayOdds) == (g.homeScore > g.awayScore)) {
+                        brackets[bracket].accurate += 1;
+                        accurateGames += 1;
+                    }
+                });
+
+                let root = document.getElementById('root');
+                root.innerHTML = "";
+                let heading = document.createElement('h2');
+                heading.innerHTML = `Blaseball Odds Accuracy Rate<br/>Season ${season + 1}`;
+                root.append(heading);
+                let rate = document.createElement('h1');
+                rate.innerText = `Accuracy Rate: ${((accurateGames*100)/totalGames).toFixed(1)}%`;
+                root.append(rate);
+                let description = document.createElement('p');
+                description.innerText = `Out of ${totalGames} games so far this season, ${accurateGames} were correctly predicted.`;
+                root.append(description);
+
+                let details = document.createElement('div')
+                details.id = "note"
+
+                for (var key in brackets) {
+                    let detail = document.createElement('p');
+                    var value = brackets[key];
+                    if (value.total == 0) {
+                        continue;
+                    }
+                    detail.innerText = `In the ${key}% to ${parseInt(key)+bracketDist-0.1}% confidence range, ${value.accurate} out of ${value.total} games (${((value.accurate*100)/value.total).toFixed(1)}%) were predicted correctly`;
+                    details.append(detail);
+                }
+                root.append(details);
+            }
+
+            // get season data and kick off render
+            function getDataForSeason() {
                 fetch("https://api.sibr.dev/chronicler/v1/games?season=" + season)
                 .then(res => res.json())
                 .then(data => data.data.filter(game => game.endTime != null))
-                .then(data => {
-                    totalGames = data.length;
-                    data.forEach(game => {
-                        let g = game.data;
-                        if ((g.homeOdds > g.awayOdds) == (g.homeScore > g.awayScore)) {
-                            accurateGames += 1;
-                        }
-                    });
+                .then(d => {
+                    data = d;
                 })
                 .then(() => {
-                    let root = document.getElementById('root');
-                    root.innerHTML = "";
-                    let heading = document.createElement('h2');
-                    heading.innerHTML = `Blaseball Odds Accuracy Rate<br/>Season ${season + 1}`;
-                    root.append(heading);
-                    let rate = document.createElement('h1');
-                    rate.innerText = `Accuracy Rate: ${((accurateGames*100)/totalGames).toFixed(1)}%`;
-                    root.append(rate);
-                    let description = document.createElement('p');
-                    description = `Out of ${totalGames} games so far this season, ${accurateGames} were correctly predicted.`;
-                    root.append(description);
+                    render();
                 });
             }
+
+            // get season and kick off filtering
             fetch("https://cors-proxy.blaseball-reference.com/database/simulationData")
             .then(res => res.json())
-            .then(simData => getDataForSeason(simData.season));
+            .then(simData => {
+                season = simData.season;
+                getDataForSeason()
+            });
         </script>
     </body>
 </html>
