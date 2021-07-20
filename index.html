@@ -59,11 +59,8 @@
                 let heading = document.createElement('h2');
                 heading.innerHTML = `Blaseball Odds Accuracy Rate<br/>Season ${season + 1}`;
                 root.append(heading);
-                let rate = document.createElement('h1');
-                rate.innerText = `Accuracy Rate: ${((accurateGames*100)/totalGames).toFixed(1)}%`;
-                root.append(rate);
-                let description = document.createElement('p');
-                description.innerText = `Out of ${totalGames} games so far this season, ${accurateGames} were correctly predicted.`;
+                let description = document.createElement('h1');
+                description.innerText = `Out of ${totalGames} games so far this season, ${accurateGames} (${((accurateGames*100)/totalGames).toFixed(1)}%) were won by the favored team`;
                 root.append(description);
 
                 let details = document.createElement('div')
@@ -75,7 +72,7 @@
                     if (value.total == 0) {
                         continue;
                     }
-                    detail.innerText = `In the ${key}% to ${parseInt(key)+bracketDist-0.1}% confidence range, ${value.accurate} out of ${value.total} games (${((value.accurate*100)/value.total).toFixed(1)}%) were predicted correctly`;
+                    detail.innerText = `In the ${key}% to ${parseInt(key)+bracketDist-0.1}% confidence range, ${value.accurate} out of ${value.total} games (${((value.accurate*100)/value.total).toFixed(1)}%) were won by the favored team`;
                     details.append(detail);
                 }
                 root.append(details);
